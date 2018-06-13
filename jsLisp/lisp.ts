@@ -44,6 +44,11 @@ var fuc:any ={
         var s:any = l[0]
         return eva(<string>s.metContent)
     }
+    ,'def':(l:Array<Met>)=>{
+        var tocken =  l[0].metContent
+        fuc[tocken] = eval(l[1].metContent)
+        return l[0]
+    }
 }
 
 //词法分析
@@ -193,7 +198,7 @@ var eva = (code:string)=>{
 
 
 var c = `
-(eval '(+ 5 2)')
+(list 2 3 4 5 )
 `
 console.log(eva(c))
 
