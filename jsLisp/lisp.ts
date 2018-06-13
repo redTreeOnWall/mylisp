@@ -42,9 +42,7 @@ var fuc:any ={
     }
     ,"eval":(l:Array<Met>)=>{
         var s:any = l[0]
-        console.log(s.metContent)
-
-        return eva(<string>s)
+        return eva(<string>s.metContent)
     }
 }
 
@@ -195,7 +193,7 @@ var eva = (code:string)=>{
 
 
 var c = `
-(+ 2 3)
+(eval '(+ 5 2)')
 `
 console.log(eva(c))
 
