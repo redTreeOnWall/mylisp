@@ -13,12 +13,16 @@ code =`
         (+ 12 99))
 `
 
+code =  `
+    (print 'hello world sdsad ' )
+`
+
 //符号表
 var fuc:any ={
     "+":(l:Array<Met>)=>{
         var sum:any = 0;
         for(var e in l){
-            var num =parseFloat(l[e].metName)
+            var num =parseFloat(l[e].metContent)
             sum = sum + num;
         }
         return sum;
@@ -31,10 +35,16 @@ var fuc:any ={
     ,"print":(l:Array<Met>)=>{
         var s = ""
         for(var i in l){
-            s = l[i].metName+ s
+            s = l[i].metContent+ s
         }
         console.log(s)
         return s
+    }
+    ,"eval":(l:Array<Met>)=>{
+        var s:any = l[0]
+        console.log(s.metContent)
+
+        return eva(<string>s)
     }
 }
 
@@ -47,17 +57,35 @@ var cifa = (s:string )=>{
         }
     }
     var word = "";
+    var readingString = false;
     for(var i=0;i<s.length;i++){
         var c  = s.charAt(i)
-        if(c!=" " && c!= "(" &&c!=")" && c!= "\n"){
-            word = word+c;
-        }else{
-            addWord(word)
-            if(c=="(" || c == ")"){
-                word = c
-                addWord(word);
+        if(readingString){
+            if(c=="'"){
+                readingString = false;
+                word = word+c
+                addWord(word)
+                word = ""
+            }else{
+                word = word +c
             }
-            word =""
+        }else{
+            if(c=="'"){
+                readingString = true
+                addWord(word)
+                word=c
+                continue
+            }
+            if(c!=" " && c!= "(" &&c!=")" && c!= "\n"){
+                word = word+c;
+            }else{
+                addWord(word)
+                if(c=="(" || c == ")"){
+                    word = c
+                    addWord(word);
+                }
+                word =""
+            }
         }
     }
     return list;
@@ -73,7 +101,7 @@ var getAst:any=(li:Array<string>)=>{
     }
     var ast:any = ()=>{
         var met =  new Met()
-        met.isList= true;
+        met.type = MetType.list
         var tree = new Array<any>()
         met.list=tree;
         while(true){
@@ -91,9 +119,21 @@ var getAst:any=(li:Array<string>)=>{
             }
             if(m!="("&& m!=")"){
                 var notListMet = new Met()
-                notListMet.isList= false
-                notListMet.metName = m;
                 tree.push(notListMet)
+                if(m[0]=="'" && m[m.length-1]=="'"){
+                    notListMet.type = MetType.string
+                    var s = ""
+                    for(var i= 0;i<m.length;i++){
+                        if(i!=0 && i!= m.length-1){
+                            s = s + m.charAt(i)
+                        }
+                    }
+                    notListMet.metContent = s
+                    continue
+                }
+
+                notListMet.type = MetType.base
+                notListMet.metContent = m
             }
         }
         // return tree;
@@ -106,42 +146,58 @@ var execAST:any = (ast:Met)=>{
     return ast.exec()
 }
 
+
+enum MetType{
+    base,
+    list,
+    string,
+    number,
+    jsObj
+}
 class Met{
-    isList=false;
     list= new Array<Met>()
-    metName=""
+    metContent:any = ""
+    type =  MetType.base
     exec(){
-        if(this.isList){
-            var n1 = this.list[0].exec()
-            var paramList =  new Array<Met>()
-            for(var i in this.list){
-                if(i=="0"){
-                    continue
+        switch(this.type){
+            case MetType.base:
+                return this
+            case MetType.list:
+                var n1 = this.list[0].exec()
+                var paramList =  new Array<Met>()
+                for(var i in this.list){
+                    if(i=="0"){
+                        continue
+                    }
+                    var li = this.list[i]
+                    var param = li.exec()
+                    paramList.push(param)
                 }
-                var li = this.list[i]
-                var param = li.exec()
-                paramList.push(param)
-            }
-            var result = fuc[n1.metName](paramList)
-            var resultMet =  new Met();
-            resultMet.metName = <string>result;
-            return resultMet
-        }else{
+                var result = fuc[n1.metContent](paramList)
+                var resultMet =  new Met();
+                resultMet.metContent = <string>result;
+                return resultMet
+            case MetType.string:
+                return this
+            default:
             return this
         }
+        
     }
 }
 
-var l = cifa (code);
-// console.log(li)
-var t = getAst(l)
+var eva = (code:string)=>{
+    var c = cifa(code)
+    var t = getAst(c)
+    var result = execAST(t)
+    return result
+}
 
-console.log("> --code --")
-console.log(code)
-console.log("> -- run --")
-var result = execAST(t)
-console.log("> -- result --")
-console.log(result.metName)
+
+var c = `
+(+ 2 3)
+`
+console.log(eva(c))
 
 
 
