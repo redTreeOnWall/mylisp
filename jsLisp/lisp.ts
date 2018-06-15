@@ -46,11 +46,15 @@ var fuc:any ={
     }
     ,'def':(l:Array<Met>)=>{
         var tocken =  l[0].metContent
-        fuc[tocken] = eval(l[1].metContent)
+        fuc[tocken] = l[1].metContent
         return l[0]
     }
 }
 
+var c =
+ `
+( print  (def name ' id is tmat mane') name)
+`
 //词法分析
 var cifa = (s:string )=>{
     var list =  new Array<string>()
@@ -93,7 +97,6 @@ var cifa = (s:string )=>{
     }
     return list;
 }
-
 
 //语法分析 生成语法树
 var getAst:any=(li:Array<string>)=>{
@@ -197,9 +200,6 @@ var eva = (code:string)=>{
 }
 
 
-var c = `
-(list 2 3 4 5 )
-`
 console.log(eva(c))
 
 
