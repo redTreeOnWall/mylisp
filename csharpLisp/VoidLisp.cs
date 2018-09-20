@@ -147,16 +147,32 @@ namespace UI {
         public VoidLisp() {
             Functions = new Dictionary<string, LispFunction> {
                 {
+                    "runlist",
+                    new LispFunction(li => {
+                        var listMet = new Met(this);
+                        listMet.Type       = Met.MetType.List;
+                        listMet.Mets       = new List<Met>();
+                        foreach (var met in li) {
+                            listMet.Mets.Add(met.Exec());
+                        }
+                        listMet.MetContent = "runlist";
+                        return listMet;
+                    })
+                },
+                {
                     "list",
                     new LispFunction(li => {
                         var listMet = new Met(this);
                         listMet.Type       = Met.MetType.List;
-                        listMet.Mets       = li;
+                        listMet.Mets = li;
                         listMet.MetContent = "list";
                         return listMet;
                     })
                 },
                 {"eval", new LispFunction(li => Eval(li[0].MetContent))},
+                {"exec",new LispFunction(li => {
+                    return li[0].Exec();
+                })},
                 {
                     "let" , 
                     new LispFunction(li => {
@@ -171,10 +187,9 @@ namespace UI {
                     "print", new LispFunction(l => {
                         var s = "";
                         foreach (var met in l) {
-                            met.Print();
-                            s = s + " " + met.MetContent;
+                            s = s + " " + met.Exec().MetContent;
                         }
-
+                        Debug.Log(s);
                         var resmet = new Met(this);
                         resmet.MetContent = s;
                         resmet.Type       = Met.MetType.BaseMat;
@@ -193,7 +208,7 @@ namespace UI {
                     "+", new LispFunction(metList => {
                         var sum = 0f;
                         foreach (var met in metList) {
-                            var n = float.Parse(met.MetContent);
+                            var n = float.Parse(met.Exec().MetContent);
                             sum = n + sum;
                         }
 
@@ -207,7 +222,7 @@ namespace UI {
                     "*", new LispFunction(metList => {
                         var sum = 1f;
                         foreach (var met in metList) {
-                            var n = float.Parse(met.MetContent);
+                            var n = float.Parse(met.Exec().MetContent);
                             sum = n * sum;
                         }
 
@@ -219,9 +234,9 @@ namespace UI {
                 },
                 {
                     "-", new LispFunction(metList => {
-                        var result = float.Parse(metList[0].MetContent);
+                        var result = float.Parse(metList[0].Exec().MetContent);
                         for (var i = 1; i < metList.Count; i++) {
-                            var n = float.Parse(metList[i].MetContent);
+                            var n = float.Parse(metList[i].Exec().MetContent);
                             result = result - n;
                         }
 
@@ -233,9 +248,9 @@ namespace UI {
                 },
                 {
                     "/", new LispFunction(metList => {
-                        var result = float.Parse(metList[0].MetContent);
+                        var result = float.Parse(metList[0].Exec().MetContent);
                         for (var i = 1; i < metList.Count; i++) {
-                            var n = float.Parse(metList[i].MetContent);
+                            var n = float.Parse(metList[i].Exec().MetContent);
                             result = result / n;
                         }
 
@@ -252,6 +267,7 @@ namespace UI {
                 },
                 {
                     "openMsgW" , new LispFunction(l => {
+                        
                         UIUtils.SimpleMsgWindow(l[0].MetContent, () => {
                         }, () => {
                         });
@@ -259,6 +275,16 @@ namespace UI {
                         m.Type = Met.MetType.BaseMat;
                         
                         return m;
+                    })
+                },
+                {
+                    "if",
+                    new LispFunction(li => {
+                        if (li[0].Exec().MetContent == "T") {
+                            return li[1].Exec();
+                        } else {
+                            return li[2].Exec();
+                        }
                     })
                 }
                 
@@ -270,8 +296,10 @@ namespace UI {
     public class Met {
         private VoidLisp _eviroment;
 
-        public Met(VoidLisp eviroment) {
+        public Met(VoidLisp eviroment,MetType type = MetType.BaseMat,string content = "Nil") {
+            Type = type;
             _eviroment = eviroment;
+            MetContent = content;
         }
 
         public enum MetType {
@@ -303,7 +331,7 @@ namespace UI {
                         }
 
                         var li    = Mets[i];
-                        var param = li.Exec();
+                        var param = li;
                         paramList.Add(param);
                     }
 
